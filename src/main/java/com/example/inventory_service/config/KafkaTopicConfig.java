@@ -9,9 +9,15 @@ import org.springframework.kafka.config.TopicBuilder;
 public class KafkaTopicConfig {
 
     public static final String INVENTORY_RESULT_TOPIC = "inventory-result";
+    public static final String ORDER_CREATED_DLT_TOPIC = "order-created.DLT";
 
     @Bean
     public NewTopic inventoryResultTopic(){
         return TopicBuilder.name(INVENTORY_RESULT_TOPIC).partitions(1).replicas(1).build();
+    }
+
+    @Bean
+    public NewTopic orderCreatedDltTopic(){
+        return TopicBuilder.name(ORDER_CREATED_DLT_TOPIC).partitions(1).replicas(1).build();
     }
 }
