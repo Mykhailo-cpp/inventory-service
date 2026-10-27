@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Random;
 
 @Service
 @RequiredArgsConstructor
@@ -20,10 +21,15 @@ public class InventoryServiceImpl implements InventoryService {
 
     private final InventoryResultProducer producer;
     private final ProcessedMessagesRepository processedMessagesRepository;
+    private final Random random = new Random();
 
     @Override
     @Transactional
     public InventoryResultEvent processOrder(OrderCreatedEvent order) {
+        if(random.nextBoolean()){
+            throw new RuntimeException("Simulated failure during inventory processing");
+        }
+
 
         String messageId = String.valueOf(order.orderId());
 
