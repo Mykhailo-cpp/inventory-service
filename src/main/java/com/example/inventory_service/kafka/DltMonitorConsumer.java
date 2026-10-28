@@ -1,7 +1,6 @@
 package com.example.inventory_service.kafka;
 
 import com.example.inventory_service.dto.OrderCreatedEvent;
-import jdk.swing.interop.SwingInterOpUtils;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
