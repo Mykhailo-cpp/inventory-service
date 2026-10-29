@@ -12,11 +12,21 @@ spring:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
-        spring.json.use.type.headers: false
-        spring.json.value.default.type: com.example.inventory_service.dto.OrderCreatedEvent
         spring.json.trusted.packages: com.example.inventory_service.dto
+        spring.json.type.mapping: >
+          ORDER_CREATED:com.example.inventory_service.dto.OrderCreatedEvent,
+          ORDER_UPDATED:com.example.inventory_service.dto.OrderUpdatedEvent,
+          ORDER_CANCELLED:com.example.inventory_service.dto.OrderCancelledEvent
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       properties:
         spring.json.add.type.headers: false
+  datasource:
+    url: jdbc:postgresql://localhost:5432/orders_db
+    username: postgres
+    password: postgres123
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
