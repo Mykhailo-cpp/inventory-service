@@ -9,6 +9,7 @@ import com.example.inventory_service.repository.ProcessedMessagesRepository;
 import com.example.inventory_service.service.InventoryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,7 +27,7 @@ public class InventoryServiceImpl implements InventoryService {
     private final Random random = new Random();
 
     @Override
-    //@Transactional
+    @Transactional
     public InventoryResultEvent processOrder(OrderCreatedEvent order) {
         /*if(random.nextBoolean()){
             throw new RuntimeException("Simulated failure during inventory processing");
@@ -35,9 +36,12 @@ public class InventoryServiceImpl implements InventoryService {
 
         String messageId = String.valueOf(order.orderId());
 
-        if(processedMessagesRepository.existsByMessageId(messageId)){
-            log.info("Duplicate event detected. Ignored for orderId: {}", messageId);
+        try{
+            ProcessedMessage processedMessage = new ProcessedMessage(messageId, LocalDateTime.now());
 
+            processedMessagesRepository.save(processedMessage);
+        }catch (DataIntegrityViolationException e){
+            log.warn("Duplicate event detected. Skipping orderId: {}", messageId);
             return null;
         }
 
@@ -51,13 +55,6 @@ public class InventoryServiceImpl implements InventoryService {
         }
 
         InventoryResultEvent result = new InventoryResultEvent(order.orderId(), status);
-
-        processedMessagesRepository.save(
-                ProcessedMessage.builder()
-                        .messageId(messageId)
-                        .processedAt(LocalDateTime.now())
-                        .build()
-        );
 
         producer.publish(result);
 

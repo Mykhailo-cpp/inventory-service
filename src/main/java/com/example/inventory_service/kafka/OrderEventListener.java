@@ -6,6 +6,7 @@ import com.example.inventory_service.dto.OrderUpdatedEvent;
 import com.example.inventory_service.service.InventoryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.kafka.annotation.KafkaHandler;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
@@ -14,11 +15,12 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @Log4j2
+@KafkaListener(topics = "order-events", groupId = "inventory-service-v6")
 public class OrderEventListener {
 
     private final InventoryService inventoryService;
 
-    @KafkaListener(topics = "order-events", groupId = "inventory-service-v3")
+    @KafkaHandler
     public void handleOrderCreated(
             OrderCreatedEvent event,
             @Header(KafkaHeaders.RECEIVED_KEY) String key,
@@ -28,15 +30,11 @@ public class OrderEventListener {
 
 
         log.info("ORDER CREATED >>> OrderId: {}, Product: {}, x{}", event.orderId(), event.product(), event.quantity());
-        try{
-            inventoryService.processOrder(event);
-        }catch(Exception e){
-            log.error("Error processing ORDER_CREATED for orderId: {}", event.orderId(), e);
-            //throw e;
-        }
+
+        inventoryService.processOrder(event);
     }
 
-    @KafkaListener(topics = "order-events", groupId = "inventory-service")
+    @KafkaHandler
     public void handleOrderUpdated(
             OrderUpdatedEvent event,
             @Header(KafkaHeaders.RECEIVED_KEY) String key,
@@ -48,7 +46,7 @@ public class OrderEventListener {
         System.out.println("ORDER UPDATED >>> OrderId: " + event.orderId() + " Product: " + event.product() + " New Quantity" + event.newQuantity());
     }
 
-    @KafkaListener(topics = "order-events", groupId = "inventory-service")
+    @KafkaHandler
     public void handleOrderCancelled(
             OrderCancelledEvent event,
             @Header(KafkaHeaders.RECEIVED_KEY) String key,
