@@ -7,8 +7,9 @@ spring:
   kafka:
     bootstrap-servers: localhost:9092
     consumer:
-      group-id: inventory-service
+      group-id: inventory-service-v3
       auto-offset-reset: earliest
+      enable-auto-commit: false
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
@@ -17,6 +18,8 @@ spring:
           ORDER_CREATED:com.example.inventory_service.dto.OrderCreatedEvent,
           ORDER_UPDATED:com.example.inventory_service.dto.OrderUpdatedEvent,
           ORDER_CANCELLED:com.example.inventory_service.dto.OrderCancelledEvent
+    listener:
+      ack-mode: RECORD
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer

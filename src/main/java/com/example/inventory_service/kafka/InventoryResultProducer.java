@@ -14,9 +14,14 @@ public class InventoryResultProducer {
 
     private final KafkaTemplate<String, InventoryResultEvent> kafkaTemplate;
 
-    public void publish(InventoryResultEvent event){
-        kafkaTemplate.send(KafkaTopicConfig.INVENTORY_RESULT_TOPIC, event.orderId().toString(), event);
-
-        log.info("Published inventory result {} for order {}", event.status(), event.orderId());
+    public void publish(InventoryResultEvent event) {
+        kafkaTemplate.send(KafkaTopicConfig.INVENTORY_RESULT_TOPIC, event.orderId().toString(), event)
+                .whenComplete((res, ex) -> {
+                    if (ex != null) {
+                        log.error("Failed to publish inventory result for order: {}", event.orderId(), ex);
+                    } else {
+                        log.info("Published inventory result {} for order {}", event.status(), event.orderId());
+                    }
+                });
     }
 }

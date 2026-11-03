@@ -18,7 +18,7 @@ public class KafkaConsumerConfig {
                 kafkaTemplate,
                 (record, ex) -> {
                     System.out.println("Routing to DLT: " + record.topic() + ".DLT");
-                    return new TopicPartition(record.topic() + ".DLT", record.partition());
+                    return new TopicPartition(record.topic() + ".DLT", -1);
                 }
         );
 
