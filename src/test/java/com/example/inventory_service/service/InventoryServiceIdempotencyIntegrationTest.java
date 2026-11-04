@@ -49,7 +49,7 @@ class InventoryServiceIdempotencyIntegrationTest {
 
         assertNotNull(firstResult, "First call should process successfully");
         assertEquals(orderId, firstResult.orderId());
-        assertTrue(processedMessageRepository.existsByMessageId(orderId.toString()),
+        assertTrue(processedMessageRepository.existsById(orderId.toString()),
                 "Message ID should be recorded in processed_messages table");
 
         InventoryResultEvent secondResult = inventoryService.processOrder(event);

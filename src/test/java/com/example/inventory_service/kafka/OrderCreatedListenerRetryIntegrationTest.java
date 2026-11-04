@@ -10,6 +10,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ActiveProfiles;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import java.nio.charset.StandardCharsets;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.time.Duration;
@@ -22,7 +25,8 @@ import static org.mockito.Mockito.*;
 
 @SpringBootTest
 @DirtiesContext
-@EmbeddedKafka(partitions = 1, topics = {"order-created"})
+@ActiveProfiles("test")
+@EmbeddedKafka(partitions = 1, topics = {"order-events"}, bootstrapServersProperty = "spring.kafka.bootstrap-servers")
 class OrderCreatedListenerRetryIntegrationTest {
 
     @Autowired
@@ -46,7 +50,9 @@ class OrderCreatedListenerRetryIntegrationTest {
                 LocalDateTime.now()
         );
 
-        kafkaTemplate.send("order-created", event);
+        ProducerRecord<String, Object> record = new ProducerRecord<>("order-events", "1001", event);
+        record.headers().add("__TypeId__", "ORDER_CREATED".getBytes(StandardCharsets.UTF_8));
+        kafkaTemplate.send(record);
 
         await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> verify(inventoryService, atLeast(2)).processOrder(any()));
     }

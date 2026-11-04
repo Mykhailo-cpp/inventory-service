@@ -36,14 +36,12 @@ public class InventoryServiceImpl implements InventoryService {
 
         String messageId = String.valueOf(order.orderId());
 
-        try{
-            ProcessedMessage processedMessage = new ProcessedMessage(messageId, LocalDateTime.now());
-
-            processedMessagesRepository.save(processedMessage);
-        }catch (DataIntegrityViolationException e){
+        if(processedMessagesRepository.existsById(messageId)){
             log.warn("Duplicate event detected. Skipping orderId: {}", messageId);
             return null;
         }
+
+        processedMessagesRepository.save(new ProcessedMessage(messageId, LocalDateTime.now()));
 
         InventoryStatus status;
 
