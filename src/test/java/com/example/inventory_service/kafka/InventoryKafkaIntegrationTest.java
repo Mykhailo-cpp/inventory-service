@@ -16,6 +16,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
@@ -25,7 +29,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
-@SpringBootTest
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 @EmbeddedKafka(partitions = 3, bootstrapServersProperty = "spring.kafka.bootstrap-servers")
 class InventoryKafkaIntegrationTest {
@@ -36,6 +40,9 @@ class InventoryKafkaIntegrationTest {
 
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
+
+    @Value("${local.server.port}")
+    private int port;
 
     @Autowired
     private ProcessedMessagesRepository processedMessagesRepository;
@@ -77,7 +84,51 @@ class InventoryKafkaIntegrationTest {
                 .isNull();
     }
 
+    @Test
+    void correlationId_fromOrderEventIsCarriedToInventoryResult() {
+        UUID orderId = UUID.randomUUID();
+
+        sendOrderCreated(orderId, 2, "corr-from-order-service");
+
+        ConsumerRecord<String, String> result =
+                awaitRecord(INVENTORY_RESULT, orderId.toString(), Duration.ofSeconds(20));
+        assertThat(result).isNotNull();
+        var header = result.headers().lastHeader("X-Correlation-Id");
+        assertThat(header).as("correlation header on inventory-result").isNotNull();
+        assertThat(new String(header.value(), StandardCharsets.UTF_8)).isEqualTo("corr-from-order-service");
+    }
+
+    @Test
+    void healthEndpoint_reportsUpWithKafkaAndDatabase() throws Exception {
+        HttpResponse<String> response = get("/actuator/health");
+
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.body())
+                .contains("\"status\":\"UP\"")
+                .contains("\"kafka\"")
+                .contains("\"db\"");
+    }
+
+    @Test
+    void prometheusEndpoint_exposesMetricsTaggedWithApplicationName() throws Exception {
+        HttpResponse<String> response = get("/actuator/prometheus");
+
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.body())
+                .contains("jvm_memory_used_bytes")
+                .contains("application=\"inventory-service\"");
+    }
+
+    private HttpResponse<String> get(String path) throws Exception {
+        HttpRequest request = HttpRequest.newBuilder(URI.create("http://localhost:" + port + path)).GET().build();
+        return HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+    }
+
     private void sendOrderCreated(UUID orderId, int quantity) {
+        sendOrderCreated(orderId, quantity, null);
+    }
+
+    private void sendOrderCreated(UUID orderId, int quantity, String correlationId) {
         String json = """
                 {"orderId":"%s","customerId":1,"product":"laptop","quantity":%d,"createdTime":"2026-01-01T12:00:00.000"}
                 """.formatted(orderId, quantity).trim();
@@ -89,12 +140,20 @@ class InventoryKafkaIntegrationTest {
         try (KafkaProducer<String, String> producer = new KafkaProducer<>(props)) {
             ProducerRecord<String, String> record = new ProducerRecord<>(ORDER_EVENTS, "1", json);
             record.headers().add("__TypeId__", "ORDER_CREATED".getBytes(StandardCharsets.UTF_8));
+            if (correlationId != null) {
+                record.headers().add("X-Correlation-Id", correlationId.getBytes(StandardCharsets.UTF_8));
+            }
             producer.send(record);
             producer.flush();
         }
     }
 
     private String awaitResult(String topic, String orderId, Duration timeout) {
+        ConsumerRecord<String, String> record = awaitRecord(topic, orderId, timeout);
+        return record == null ? null : record.value();
+    }
+
+    private ConsumerRecord<String, String> awaitRecord(String topic, String orderId, Duration timeout) {
         Map<String, Object> props = Map.of(
                 ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers,
                 ConsumerConfig.GROUP_ID_CONFIG, "test-" + UUID.randomUUID(),
@@ -107,7 +166,7 @@ class InventoryKafkaIntegrationTest {
             while (System.currentTimeMillis() < deadline) {
                 for (ConsumerRecord<String, String> r : consumer.poll(Duration.ofMillis(300))) {
                     if (r.value() != null && r.value().contains(orderId)) {
-                        return r.value();
+                        return r;
                     }
                 }
             }
