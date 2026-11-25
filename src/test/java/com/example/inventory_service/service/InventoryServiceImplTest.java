@@ -4,6 +4,7 @@ import com.example.inventory_service.dto.InventoryResultEvent;
 import com.example.inventory_service.dto.InventoryStatus;
 import com.example.inventory_service.dto.OrderCreatedEvent;
 import com.example.inventory_service.kafka.InventoryResultProducer;
+import com.example.inventory_service.repository.ProcessedMessagesRepository;
 import com.example.inventory_service.service.impl.InventoryServiceImpl;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -23,6 +24,9 @@ class InventoryServiceImplTest {
 
     @Mock
     private InventoryResultProducer producer;
+
+    @Mock
+    private ProcessedMessagesRepository processedMessagesRepository;
 
     @InjectMocks
     private InventoryServiceImpl inventoryService;
