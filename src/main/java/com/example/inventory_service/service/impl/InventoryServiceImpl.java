@@ -1,20 +1,20 @@
 package com.example.inventory_service.service.impl;
 
+import com.example.inventory_service.avro.OrderCreated;
 import com.example.inventory_service.dto.InventoryResultEvent;
 import com.example.inventory_service.dto.InventoryStatus;
-import com.example.inventory_service.dto.OrderCreatedEvent;
 import com.example.inventory_service.kafka.InventoryResultProducer;
 import com.example.inventory_service.model.ProcessedMessage;
 import com.example.inventory_service.repository.ProcessedMessagesRepository;
 import com.example.inventory_service.service.InventoryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Random;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -28,13 +28,13 @@ public class InventoryServiceImpl implements InventoryService {
 
     @Override
     @Transactional
-    public InventoryResultEvent processOrder(OrderCreatedEvent order) {
+    public InventoryResultEvent processOrder(OrderCreated order) {
         /*if(random.nextBoolean()){
             throw new RuntimeException("Simulated failure during inventory processing");
         }*/
 
 
-        String messageId = String.valueOf(order.orderId());
+        String messageId = String.valueOf(order.getOrderId());
 
         if(processedMessagesRepository.existsById(messageId)){
             log.warn("Duplicate event detected. Skipping orderId: {}", messageId);
@@ -45,14 +45,14 @@ public class InventoryServiceImpl implements InventoryService {
 
         InventoryStatus status;
 
-        if(order.quantity() <= MAX_AVAILABLE_QUANTITY){
+        if(order.getQuantity() <= MAX_AVAILABLE_QUANTITY){
             status = InventoryStatus.AVAILABLE;
         }
         else{
             status = InventoryStatus.OUT_OF_STOCK;
         }
 
-        InventoryResultEvent result = new InventoryResultEvent(order.orderId(), status);
+        InventoryResultEvent result = new InventoryResultEvent(UUID.fromString(order.getOrderId()), status);
 
         producer.publish(result);
 

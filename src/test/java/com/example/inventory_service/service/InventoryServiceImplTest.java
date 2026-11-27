@@ -1,8 +1,8 @@
 package com.example.inventory_service.service;
 
+import com.example.inventory_service.avro.OrderCreated;
 import com.example.inventory_service.dto.InventoryResultEvent;
 import com.example.inventory_service.dto.InventoryStatus;
-import com.example.inventory_service.dto.OrderCreatedEvent;
 import com.example.inventory_service.kafka.InventoryResultProducer;
 import com.example.inventory_service.repository.ProcessedMessagesRepository;
 import com.example.inventory_service.service.impl.InventoryServiceImpl;
@@ -40,7 +40,7 @@ class InventoryServiceImplTest {
     })
     void processOrder_decidesStatusByQuantityAndPublishesResult(int quantity, InventoryStatus expected) {
         UUID orderId = UUID.randomUUID();
-        OrderCreatedEvent order = new OrderCreatedEvent(orderId, 1L, "laptop", quantity, LocalDateTime.now());
+        OrderCreated order = new OrderCreated(orderId.toString(), 1L, "laptop", quantity, LocalDateTime.now());
 
         InventoryResultEvent result = inventoryService.processOrder(order);
 

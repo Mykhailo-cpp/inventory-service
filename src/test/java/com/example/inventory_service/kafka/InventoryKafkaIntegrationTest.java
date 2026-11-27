@@ -1,5 +1,7 @@
 package com.example.inventory_service.kafka;
 
+import com.example.inventory_service.avro.OrderCreated;
+import com.example.inventory_service.kafka.avro.OrderEventAvroSerializer;
 import com.example.inventory_service.repository.ProcessedMessagesRepository;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -22,6 +24,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -129,16 +132,15 @@ class InventoryKafkaIntegrationTest {
     }
 
     private void sendOrderCreated(UUID orderId, int quantity, String correlationId) {
-        String json = """
-                {"orderId":"%s","customerId":1,"product":"laptop","quantity":%d,"createdTime":"2026-01-01T12:00:00.000"}
-                """.formatted(orderId, quantity).trim();
+        OrderCreated event = new OrderCreated(
+                orderId.toString(), 1L, "laptop", quantity, LocalDateTime.of(2026, 1, 1, 12, 0));
 
         Map<String, Object> props = Map.of(
                 ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers,
                 ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class,
-                ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        try (KafkaProducer<String, String> producer = new KafkaProducer<>(props)) {
-            ProducerRecord<String, String> record = new ProducerRecord<>(ORDER_EVENTS, "1", json);
+                ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, OrderEventAvroSerializer.class);
+        try (KafkaProducer<String, OrderCreated> producer = new KafkaProducer<>(props)) {
+            ProducerRecord<String, OrderCreated> record = new ProducerRecord<>(ORDER_EVENTS, "1", event);
             record.headers().add("__TypeId__", "ORDER_CREATED".getBytes(StandardCharsets.UTF_8));
             if (correlationId != null) {
                 record.headers().add("X-Correlation-Id", correlationId.getBytes(StandardCharsets.UTF_8));

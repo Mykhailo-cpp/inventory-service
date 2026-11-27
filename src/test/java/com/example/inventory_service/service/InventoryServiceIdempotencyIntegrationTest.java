@@ -1,7 +1,7 @@
 package com.example.inventory_service.service;
 
+import com.example.inventory_service.avro.OrderCreated;
 import com.example.inventory_service.dto.InventoryResultEvent;
-import com.example.inventory_service.dto.OrderCreatedEvent;
 import com.example.inventory_service.repository.ProcessedMessagesRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -37,8 +37,8 @@ class InventoryServiceIdempotencyIntegrationTest {
     @DisplayName("Should process order on first attempt and ignore duplicate event on second attempt")
     void shouldPreventDuplicateProcessingOfSameOrder() {
         UUID orderId = UUID.randomUUID();
-        OrderCreatedEvent event = new OrderCreatedEvent(
-                orderId,
+        OrderCreated event = new OrderCreated(
+                orderId.toString(),
                 1001L,
                 "Laptop",
                 2,

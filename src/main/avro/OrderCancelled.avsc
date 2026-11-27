@@ -1,0 +1,11 @@
+{
+  "type": "record",
+  "name": "OrderCancelled",
+  "namespace": "com.example.inventory_service.avro",
+  "doc": "Published to order-events (key: customerId) when an order is cancelled.",
+  "fields": [
+    { "name": "orderId", "type": "string", "doc": "Order UUID as a string" },
+    { "name": "reason", "type": "string" },
+    { "name": "createdTime", "type": { "type": "long", "logicalType": "local-timestamp-millis" } }
+  ]
+}

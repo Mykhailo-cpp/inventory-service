@@ -1,0 +1,13 @@
+{
+  "type": "record",
+  "name": "OrderCreated",
+  "namespace": "com.example.inventory_service.avro",
+  "doc": "Published to order-events (key: customerId) when an order has been saved.",
+  "fields": [
+    { "name": "orderId", "type": "string", "doc": "Order UUID as a string" },
+    { "name": "customerId", "type": "long" },
+    { "name": "product", "type": "string" },
+    { "name": "quantity", "type": "int" },
+    { "name": "createdTime", "type": { "type": "long", "logicalType": "local-timestamp-millis" } }
+  ]
+}

@@ -1,7 +1,7 @@
 package com.example.inventory_service.kafka;
 
 
-import com.example.inventory_service.dto.OrderCreatedEvent;
+import com.example.inventory_service.avro.OrderCreated;
 import com.example.inventory_service.service.InventoryService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -42,8 +42,8 @@ class OrderCreatedListenerRetryIntegrationTest {
         doThrow(new RuntimeException("Simulated failure"))
                 .when(inventoryService).processOrder(any());
 
-        OrderCreatedEvent event = new OrderCreatedEvent(
-                UUID.randomUUID(),
+        OrderCreated event = new OrderCreated(
+                UUID.randomUUID().toString(),
                 1001L,
                 "Test Product",
                 1,
