@@ -1,0 +1,17 @@
+### customer 1
+POST http://localhost:8081/orders
+Content-Type: application/json
+
+{"customerId": 1, "product": "book", "quantity": 2}
+
+### customer 2
+POST http://localhost:8081/orders
+Content-Type: application/json
+
+{"customerId": 2, "product": "book", "quantity": 2}
+
+### customer 3
+POST http://localhost:8081/orders
+Content-Type: application/json
+
+{"customerId": 3, "product": "book", "quantity": 2}

@@ -1,8 +1,8 @@
 package com.example.inventory_service.kafka;
 
-import com.example.inventory_service.dto.OrderCancelledEvent;
-import com.example.inventory_service.dto.OrderCreatedEvent;
-import com.example.inventory_service.dto.OrderUpdatedEvent;
+import com.example.inventory_service.avro.OrderCancelled;
+import com.example.inventory_service.avro.OrderCreated;
+import com.example.inventory_service.avro.OrderUpdated;
 import com.example.inventory_service.service.InventoryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -22,38 +22,38 @@ public class OrderEventListener {
 
     @KafkaHandler
     public void handleOrderCreated(
-            OrderCreatedEvent event,
+            OrderCreated event,
             @Header(KafkaHeaders.RECEIVED_KEY) String key,
             @Header(KafkaHeaders.RECEIVED_PARTITION) int partition,
             @Header(KafkaHeaders.OFFSET) long offset){
         log.info("ORDER CREATED >>> Key(customerId): {} | Partition: {} | Offset: {}", key, partition, offset);
 
 
-        log.info("ORDER CREATED >>> OrderId: {}, Product: {}, x{}", event.orderId(), event.product(), event.quantity());
+        log.info("ORDER CREATED >>> OrderId: {}, Product: {}, x{}", event.getOrderId(), event.getProduct(), event.getQuantity());
 
         inventoryService.processOrder(event);
     }
 
     @KafkaHandler
     public void handleOrderUpdated(
-            OrderUpdatedEvent event,
+            OrderUpdated event,
             @Header(KafkaHeaders.RECEIVED_KEY) String key,
             @Header(KafkaHeaders.RECEIVED_PARTITION) int partition,
             @Header(KafkaHeaders.OFFSET) long offset){
         log.info("ORDER UPDATED >>> Key(customerId): {} | Partition: {} | Offset: {}", key, partition, offset);
 
 
-        System.out.println("ORDER UPDATED >>> OrderId: " + event.orderId() + " Product: " + event.product() + " New Quantity" + event.newQuantity());
+        System.out.println("ORDER UPDATED >>> OrderId: " + event.getOrderId() + " Product: " + event.getProduct() + " New Quantity" + event.getNewQuantity());
     }
 
     @KafkaHandler
     public void handleOrderCancelled(
-            OrderCancelledEvent event,
+            OrderCancelled event,
             @Header(KafkaHeaders.RECEIVED_KEY) String key,
             @Header(KafkaHeaders.RECEIVED_PARTITION) int partition,
             @Header(KafkaHeaders.OFFSET) long offset){
         log.info("ORDER CANCELLED >>> Key(customerId): {} | Partition: {} | Offset: {}", key, partition, offset);
 
-        System.out.println("ORDER CANCELLED >>> OrderId: " + event.orderId() + " Reason: " + event.reason());
+        System.out.println("ORDER CANCELLED >>> OrderId: " + event.getOrderId() + " Reason: " + event.getReason());
     }
 }
